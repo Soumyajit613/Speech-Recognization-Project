@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Speech Recognition</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <h1>Speech Recognition</h1>
+    <div class="container">
+    </div>
+    <div id="output"></div>
+    <div id="controls">
+      <button id="start-btn">Start</button>
+      <button id="stop-btn" disabled>Stop</button>
+    </div>
+
+    <textarea id="notepad" rows="10" cols="50"></textarea>
+
+    <script>
+     const output = document.getElementById("output");
+const startBtn = document.getElementById("start-btn");
+const stopBtn = document.getElementById("stop-btn");
+const notepad = document.getElementById("notepad");
+
+const lookupTable = {
+  "who is the chutiya of our class": "songlap ghosh",
+  "bro you are right": "Thank you !",
+  "get lost": "The purpose of this demo is to showcase the Web Speech API's speech recognition capabilities."
+};
+
+let recognition;
+
+function startRecognition() {
+  recognition = new webkitSpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onresult = (event) => {
+    let transcript = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+
+    for (const [question, answer] of Object.entries(lookupTable)) {
+      if (transcript.toLowerCase().includes(question)) {
+        output.textContent = answer;
+        addToNotepad(answer); // Add recognized answer to notepad
+        return;
+      }
+    }
+
+    output.textContent = transcript;
+    addToNotepad(transcript); // Add recognized words to notepad
+  };
+
+  recognition.onstart = () => {
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+  };
+
+  recognition.onend = () => {
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+  };
+
+  recognition.start();
+}
+
+function stopRecognition() {
+  recognition.stop();
+}
+
+function addToNotepad(text) {
+  notepad.value += text + "\n"; // Append text to notepad
+}
+
+startBtn.addEventListener("click", startRecognition);
+stopBtn.addEventListener("click", stopRecognition);
+
+if (navigator.webkitGetUserMedia) {
+  recognition = new webkitSpeechRecognition();
+} else if (navigator.mediaDevices.getUserMedia) {
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(() => {
+      recognition = new SpeechRecognition();
+    })
+    .catch((error) => {
+      console.error("Error getting user media: ", error);
+    });
+} else {
+  console.error("WebkitSpeechRecognition not supported.");
+}
+    </script>
+  </body>
+</html>
